@@ -1,0 +1,735 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>OBSTACLES</title>
+<style>
+body{
+	background-color: lightgray;
+}
+
+#commencer{
+	width: 500px;
+	height: 100px;
+	border-color: 3px solid black;
+	font: 50px fantasy;
+	background-color: orange;
+	position: fixed;
+	left: 1000px;
+	top: 600px;
+	visibility: visible;
+}
+#commencer:hover{
+	background-color: chocolate;
+}
+#instructions{
+	width: 20%;
+	height: 8%;
+	border-color: 3px solid black;
+	font: 50px fantasy;
+	background-color: orange;
+	position: fixed;
+	left:38.8%;
+	top: 60%;
+	visibility:visible;
+}
+#instructions:hover{
+	background-color: chocolate;
+}
+#back{
+	width: 500px;
+	height: 100px;
+	border-color: 3px solid black;
+	font: 50px fantasy;
+	background-color: orange;
+	position: fixed;
+	left: 40px;
+	bottom: 50px;
+	visibility: hidden;
+}
+#back:hover{
+	background-color: chocolate;
+}
+</style>	
+</head>
+
+<body>
+			<button id="commencer" onClick="disableMenu(), buttonclick.play()">COMMENCER</button>
+	<button id="instructions" onClick="enableInstructions(), buttonclick.play()">INSTRUCTIONS</button>
+	<button id="back" onClick="undo(), buttonclick.play()">BACK</button>
+	
+<script>
+var canvas = document.createElement("canvas");
+var ctx = canvas.getContext("2d");   
+canvas.width = window.innerWidth-50;
+canvas.height = window.innerHeight-50
+canvas.style.border = "10px white solid";
+canvas.style.backgroundColor= "aqua";
+canvas.style.display = "block";
+canvas.style.margin ="auto"
+document.body.appendChild(canvas);
+
+//sons//
+var victory = new Audio();
+	victory.src = "sons/victory_theme.wav";
+var powerup = new Audio();
+	powerup.src = "sons/powerup.wav"
+var death = new Audio();
+	death.src = "sons/death.wav"
+var armorup = new Audio();
+	armorup.src = "sons/armorup.wav"
+var buttonclick = new Audio();
+	buttonclick.src = "sons/button.wav"
+var totalVictory = new Audio();
+	totalVictory.src = "sons/Hey.mp3"
+var wallCollide = new Audio();
+	wallCollide.src = "sons/collision.wav"
+
+// images //
+
+var gojo_the_cat = new Image();
+	gojo_the_cat.src = "gojo.jpg"
+console.log(boosted1)
+
+
+
+//variables des éléments du jeu//
+
+var joueur={
+	x:0,
+	y:0,
+	w:30,
+	h:30,
+	color:"white",
+	speed:7
+}
+
+var cible={
+	x:0,
+	y:canvas.height-150,
+	w:50,
+	h:150,
+	color:"red"
+}
+
+
+								
+var lives = {
+	x:20,
+	y:40,
+	w:400,
+	h:20,
+	color:"#32CD32"
+}
+
+var keyDown = {}
+
+var direction 
+
+var booster={
+	x:800,
+	y:300,
+	w:50,
+	h:50,
+	color:"pink"
+}
+
+var shield={
+	x:1800,
+	y:300,
+	w:50,
+	h:50,
+	color:"#0000CD"
+}
+
+
+
+//variables "inactifs"//
+
+var menu = true
+
+
+
+var protection = false
+
+var showinstructions = false
+
+var boosted1 = false
+
+
+
+							//SYSTÈMES DE POINTAGE ET DE MENUS
+
+
+function enableInstructions(){
+	ctx.clearRect(0,0,canvas.width,canvas.height)
+	ctx.fillStyle="black"
+	ctx.font="45px Helvetica Neue"
+	document.getElementById("commencer").style.visibility="hidden"
+	document.getElementById("instructions").style.visibility="hidden"
+	document.getElementById("back").style.visibility="visible"
+	ctx.fillText("1. Utilisez les flèches du clavier pour faire bouger le personnage", 650, 400)
+	ctx.fillText("2. Évitez les obstacles à tout coup", 650, 500)
+	ctx.fillText("3. Atteindre la barre rouge, qui sera votre objectif", 650, 600)
+	ctx.fillText("4. Vous allez présentement démarrez le tutoriel", 650, 700)
+	ctx.font="25px Helvetica Neue"
+	ctx.fillText("Gojo the cat wishes you good luck------>", 1500, 1200)
+	ctx.drawImage(gojo_the_cat, canvas.width-500,canvas.height-500,500,500)
+}
+
+function undo(){
+	showMenu()
+}			
+
+function showMenu(){
+	ctx.clearRect(0,0,canvas.width,canvas.height)
+	ctx.fillStyle="black"
+	ctx.font="60px Helvetica Neue"
+	ctx.fillText("UN JEU À OBSTACLES TRÈS COOL", 800, 200)
+	document.getElementById("commencer").style.visibility="visible"
+	document.getElementById("instructions").style.visibility="visible"
+	document.getElementById("back").style.visibility="hidden"
+}
+
+
+function gameOver(){
+	ctx.clearRect(0,0,canvas.width,canvas.height)
+	ctx.fillStyle="#000000"
+	ctx.font="60px fantasy"
+	ctx.fillText("You lose!!", canvas.width/2, canvas.height/2)
+	canvas.addEventListener("mouseclick", function(){
+		menu=true
+	})
+	console.log(menu)
+}
+
+
+function Health(){
+	ctx.fillStyle=lives.color
+	ctx.fillRect(lives.x,80,lives.w,lives.h)
+	ctx.font="30px fantasy"
+	ctx.fillStyle="#000000"							
+	ctx.fillText("Your health: ", 10, 65)
+	ctx.font="15px fantasy"
+	ctx.fillText(Math.round(lives.w) + "/400pts", 30, 97)
+	if(lives.w>300){
+		lives.color="#32CD32"
+	}
+	if(lives.w<300){
+		lives.color="yellow"
+	}
+	if(lives.w<200){
+		lives.color="red"
+	}
+	if(lives.w>400){
+		lives.w=400
+	}
+}
+
+
+function Shield(){
+	ctx.font="30px fantasy"
+	ctx.fillText("Shield: ", 10, 150)
+	if(protection==true){
+		ctx.fillText("ACTIVE", 125, 150)
+	}else{ctx.fillText("INACTIVE", 125, 150)}
+}
+
+function checkBoosterStatus(){
+	if(protection==true){
+		boosted1=false
+		joueur.speed=9
+	}
+	if(boosted1==true){
+		joueur.speed=16
+	}else{joueur.speed=9}
+}
+function tutorial(){
+	if (level==0){
+		var tutorialhealth={
+		x:400,
+		y:0,
+		w:800,
+		h:canvas.height/2
+		}
+		var tutorialshield={
+		x:1500,
+		y:0,
+		w:1000,
+		h:canvas.height/2
+		}
+		var goodbye={
+			x:0,
+			y:canvas.height/2+25,
+			w:canvas.width-200,
+			h:800
+		}
+	}
+	
+	if(collision(joueur,tutorialhealth)){
+		ctx.fillText("Ceci est une boost de vie. Vous gagnez 50 pts de vie lorsqu'en contact.", 550, 400)
+		ctx.fillText("De plus, vous gagnez une boost de vitesse. Utilisez avec précaution!", 550, 450)
+	}
+	if(collision(joueur,tutorialshield)){
+		ctx.fillText("Lorsque vous activez votre ''shield'', vous vous protégez des obstacles.", 1000, 400)
+		ctx.fillText("Cependant, cela désactive votre boost de vitesse. La durée expire après un coup.", 900, 450)
+	}
+	if(collision(joueur,goodbye)){
+		ctx.fillText("Vous êtes maintenant prêts à continuer!", 1000, 800)
+		ctx.fillText("Gojo le chat guette votre progrès...", 1200, 850)
+		ctx.drawImage(gojo_the_cat,1300,900,500,500)
+	}
+}
+function evaluateDeath(){
+	joueur.color="white"
+	joueur.x=0
+	joueur.y=0
+	
+	if(protection==true){
+		protection=false
+	}else{if(level==0){
+		lives.w=lives.w
+	}else{lives.w-=100}}
+	death.play()
+	return(true)
+	boosted1=false
+}
+
+
+							//FONCTION ACTIFS//
+var sable={
+	x:250,
+	y:825,
+	w:900,
+	h:500,
+	color:"#7FFF00"
+}
+function drawSable(){
+	function draw(){
+		ctx.fillStyle=sable.color
+		ctx.fillRect(sable.x,sable.y,sable.w,sable.h)
+	}
+	if(level==1){
+		draw()
+		
+		if(collision(joueur,sable)){
+			lives.w-=0.1
+			ctx.fillStyle="black"
+			ctx.fillText("youch, acide!!", canvas.width-200, canvas.height-250)
+		}
+	}
+	if(level==3){
+		sable.x=800
+		sable.y=0
+		sable.w=250
+		sable.h=canvas.height
+		draw()
+		if(collision(joueur,sable)){
+			lives.w-=0.5
+			ctx.fillStyle="black"
+			ctx.fillText("youch, acide!!", canvas.width-200, canvas.height-250)
+		}
+
+	}
+	
+}
+
+						
+function drawJoueur(){
+	
+	ctx.fillStyle=joueur.color
+	ctx.fillRect(joueur.x, joueur.y, joueur.w, joueur.h)
+	
+	ctx.fillStyle=cible.color
+	ctx.fillRect(cible.x, cible.y, cible.w, cible.h)
+	if(level==1){
+		cible.x=canvas.width-cible.w
+	}
+	if(level==2){
+		cible.x=1375
+		cible.y=0
+	}
+	if(level==3){
+		cible.x=canvas.width-cible.w
+		cible.y=canvas.height-cible.h
+	}
+							
+		
+}
+
+
+
+
+var wall3 = new wall(0,770,canvas.width-250,25,"black")
+
+function wall(x,y,w,h,color){
+	this.x=x
+	this.y=y
+	this.w=w
+	this.h=h
+	this.color=color
+	this.drawWall=function(){
+		ctx.fillStyle=this.color
+		ctx.fillRect(this.x,this.y,this.w,this.h)
+	}
+}
+
+function drawWalls(){
+	if (level==0){
+		var wall1 = new wall(0,canvas.height/2,canvas.width-250,25,"black")
+		wall1.drawWall()
+		hitWall(joueur,wall1)
+	}
+	if (level==1){
+		var wall1 = new wall(0,300,canvas.width-250,25,"black")
+		var wall2 = new wall(250,800,canvas.width-250,25, "black")
+		wall1.drawWall()
+		wall2.drawWall()
+		hitWall(joueur,wall1)
+		hitWall(joueur,wall2)
+	}
+	if(level==3){
+		var wall1 = new wall(0,350,1000,25,"black")
+		var wall2 = new wall(250, 800, canvas.width-800, 25, "black")
+		var wall3 = new wall(1350, 0, 25, 800, "black")
+		wall1.drawWall()
+		wall2.drawWall()
+		wall3.drawWall()
+		hitWall(joueur,wall1)
+		hitWall(joueur,wall2)
+		hitWall(joueur,wall3)
+	}
+	if(level==2){
+		var wall1 = new wall(370,0,25,1000,"black")
+		var wall2 = new wall(1500,250,25,1600, "black")
+		wall1.drawWall()
+		wall2.drawWall()
+		hitWall(joueur,wall1)
+		hitWall(joueur,wall2)
+	}
+}
+
+
+var bar1 = new vBar(350,100,20,300,"orange", 15.5)
+
+var bar2 = new vBar(1200, 0, 20, 750, "orange", 15.5)
+
+var bar3 = new hBar(0, 700, 750, 20, "orange", 15.5)
+
+var bar4 = new hBar(1500, 825, 20, 750, "purple", 11.5)
+
+function vBar(x,y,w,h,color,speed){
+	this.x=x
+	this.y=y
+	this.w=w
+	this.h=h
+	this.color=color
+	this.speed=speed
+	this.draw=function(){
+		ctx.fillStyle=this.color                                
+		ctx.fillRect(this.x,this.y,this.w,this.h)
+		if (this.y<0||this.y+this.h>canvas.height){
+			this.speed = -this.speed
+		}
+		this.y+=this.speed
+	}
+}	
+function hBar(x,y,w,h,color,speed){
+	this.x=x
+	this.y=y
+	this.w=w
+	this.h=h
+	this.color=color
+	this.speed=speed
+	this.draw=function(){
+		ctx.fillStyle=this.color                                
+		ctx.fillRect(this.x,this.y,this.w,this.h)
+		if (this.x<0||this.x+this.w>canvas.width){
+			this.speed = -this.speed
+		}
+		this.x+=this.speed
+	}
+}	
+function drawObstacles(){
+	if (level==0){
+		bar1.draw()
+		if(collision(joueur,bar1)){	
+			joueur.color="white"
+			joueur.x=0
+			joueur.y=0
+			if(protection==true){
+				protection=false
+			}else{lives.w-=100}
+			death.play()
+		}
+	}
+	if(level==1){
+		bar1.x=750
+		bar1.draw()
+		if (collision(joueur, bar1)){
+			evaluateDeath()
+		}
+	}
+	if(level==3){
+		bar1.x=500
+		bar1.draw()
+		bar2.draw()
+		bar3.draw()
+		bar4.draw()
+		if(bar4.x<1500 || bar4.x+bar4.w>canvas.width-bar4.w){
+			bar4.speed = -bar4.speed
+		}
+		if(collision(joueur,bar1)||collision(joueur,bar2)||(collision(joueur,bar3))||(collision(joueur,bar4))){
+			evaluateDeath()
+		}
+		
+	}
+	if(level==2){
+		bar1.x=380
+		bar1.w=500
+		bar1.h=50
+		bar1.draw()
+
+		bar2.x=1000
+		bar2.w=500
+		bar2.h=50
+		
+		bar2.draw()
+
+	}
+
+	
+}
+var bigBar={
+		x:900,
+		y:300,
+		w:500,
+		h:20,
+		color:"orange", 
+		speed:5
+		}
+function drawBar(){
+	if (level==1){
+		ctx.fillStyle=bigBar.color
+		ctx.fillRect(bigBar.x,bigBar.y,bigBar.w,bigBar.h)
+		bigBar.y+=bigBar.speed
+		if (bigBar.y+bigBar.h>800 || bigBar.y<300){
+			bigBar.speed = -bigBar.speed
+		}
+		if(collision(joueur,bigBar)){	
+			joueur.color="white"
+			joueur.x=0
+			joueur.y=0
+			if(protection==true){
+				protection=false
+			}else{lives.w-=100}
+			death.play()
+		}
+		
+		
+	}
+}
+function notThere(o){
+	o.x=0
+	o.y=0
+	o.w=0
+	o.h=0
+}
+function there(o){
+	o.w=50
+	o.h=50
+}
+function drawBoost(){
+	ctx.fillStyle=booster.color
+	ctx.fillRect(booster.x,booster.y,booster.w,booster.h)
+	
+	if(level==1){
+			notThere(booster)
+		}
+	if(level==3){
+			booster.x=1250
+			booster.y=750
+			there(booster)
+		}
+	if(collision(joueur, booster)){
+		boosted1=true
+		lives.w+=50
+		powerup.play()
+		notThere(booster)
+		if(level==0){
+			notThere(booster)
+		}
+		
+	}
+}
+	
+function drawShield(){
+	ctx.fillStyle=shield.color
+	ctx.fillRect(shield.x,shield.y,shield.w,shield.h)
+	if(collision(joueur,shield)){
+		armorup.play()
+		protection=true
+		shield.w=0
+		shield.h=0
+	}
+		
+	if(level==1){
+			shield.w=0
+			shield.h=0	
+	}
+}
+							
+		//gestion des collisions
+
+function collision(a,b){
+	if(a.x + a.w > b.x  && a.x < b.x+b.w && a.y<b.y+b.h && a.y+a.h>b.y){
+		return(true)
+	}
+} 
+
+function hitWall(j, c){
+	if (collision(j,c)){
+		if(37 in keyDown || 39 in keyDown){
+			if(j.x < c.x+c.w/2){
+			j.x-= j.speed
+			wallCollide.play()
+			}else{
+				j.x+= j.speed
+				wallCollide.play()
+			}
+		}
+		if(38 in keyDown||40 in keyDown){
+			if(j.y<c.y+c.h/2){
+			j.y-= j.speed;
+			wallCollide.play()
+			}else{
+			j.y+= j.speed;
+			wallCollide.play()
+			}
+		}
+	}
+}
+function checkCollision(){
+	
+	if(collision(joueur,cible)){
+		joueur.x=0
+		joueur.y=0
+		victory.play()
+		boosted1=false
+		level+=1
+		console.log(boosted1)																							
+	}
+}
+
+
+							//CLAVIER ET CONTROLES//
+document.addEventListener("keydown", function(e){
+console.log(keyDown)
+	keyDown[e.keyCode]=true
+})
+
+
+document.addEventListener("keyup", function(e){
+	delete keyDown[e.keyCode]
+})
+
+function clavier() {
+								
+	if(37 in keyDown&&joueur.x>0){
+		joueur.x-=joueur.speed
+		direction = "gauche"
+	}
+	if(39 in keyDown&&joueur.x<canvas.width-joueur.w){
+		joueur.x+=joueur.speed
+		direction = "droite"
+	}
+	if(38 in keyDown&&joueur.y>0){           
+		joueur.y-=joueur.speed
+		direction = "haut"
+	}
+	if(40 in keyDown&&joueur.y<canvas.height-joueur.h){
+		joueur.y+=joueur.speed
+		direction = "bas"
+	}
+	if(!40||!39||!38||!37 in keyDown){
+		direction = "none"
+	}	
+}
+
+							/*function showMenu(){
+							}*/
+
+
+							//boucle principale du jeu
+
+
+
+function disableMenu(){
+	document.getElementById("commencer").style.visibility="hidden"
+	document.getElementById("instructions").style.visibility="hidden"
+	document.getElementById("back").style.visibility="hidden"
+	startGame()
+
+}
+
+function startGame(){
+	if(level==0){
+		ctx.clearRect(0,0,canvas.width,canvas.height)
+		tutorial()
+		
+		drawJoueur()
+		Health()
+		Shield()
+		drawObstacles()
+		drawBar()
+		clavier()
+		drawWalls()
+		drawBoost()	
+		drawShield()
+		checkBoosterStatus()
+		checkCollision()
+
+	
+		requestAnimationFrame(startGame)
+	}else{
+		ctx.clearRect(0,0,canvas.width,canvas.height)
+		checkCollision()
+		drawSable()
+		drawJoueur()
+		drawWalls()
+		Health()
+		Shield()
+		
+		drawObstacles()
+		drawBar()
+		clavier()
+		
+		drawBoost()	
+		drawShield()
+		
+		checkBoosterStatus()
+
+	
+		requestAnimationFrame(startGame)
+
+	}
+}	
+function game(){
+	
+	if(menu=true){
+		showMenu()
+		enableInstructions()
+		undo()
+	}
+}
+
+var level = 0
+game()
+console.log(menu)
+console.log(level)
+
+</script>
+</body>
+</html>
+
+								
